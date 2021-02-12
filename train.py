@@ -54,9 +54,12 @@ def main(args=None):
         default=50,
     )
     parser.add_argument("--epochs", help="Number of epochs", type=int, default=100)
-    parser.add_argument("--result_dir", default="results", help="Number of epochs", type=int, default=100)
+    parser.add_argument("--result_dir", default="results", help="Path to store training results", type=str)
+    parser.add_argument("--batch_num", default=32, help="Number of samples in a batch", type=int)
 
     parser = parser.parse_args(args)
+
+    print(parser)
 
     # Create the data loaders
     if parser.dataset == "coco":
@@ -104,17 +107,17 @@ def main(args=None):
     else:
         raise ValueError("Dataset type not understood (must be csv or coco), exiting.")
 
-    sampler = AspectRatioBasedSampler(dataset_train, batch_size=2, drop_last=False)
+    sampler = AspectRatioBasedSampler(dataset_train, batch_size=32, drop_last=False)
     dataloader_train = DataLoader(
-        dataset_train, num_workers=3, collate_fn=collater, batch_sampler=sampler
+        dataset_train, num_workers=16, collate_fn=collater, batch_sampler=sampler
     )
 
     if dataset_val is not None:
         sampler_val = AspectRatioBasedSampler(
-            dataset_val, batch_size=1, drop_last=False
+            dataset_val, batch_size=16, drop_last=False
         )
         dataloader_val = DataLoader(
-            dataset_val, num_workers=3, collate_fn=collater, batch_sampler=sampler_val
+            dataset_val, num_workers=16, collate_fn=collater, batch_sampler=sampler_val
         )
 
     # Create the model
@@ -157,7 +160,7 @@ def main(args=None):
 
     retinanet.training = True
 
-    optimizer = optim.Adam(retinanet.parameters(), lr=1e-5)
+    optimizer = optim.Adam(retinanet.parameters(), lr=1e-4)
 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=3, verbose=True
@@ -228,7 +231,7 @@ def main(args=None):
 
             print("Evaluating dataset")
 
-            coco_eval.evaluate_coco(dataset_val, retinanet)
+            coco_eval.evaluate_coco(dataset_val, retinanet, result_dir=parser.result_dir)
 
         elif parser.dataset == "csv" and parser.csv_val is not None:
 
@@ -241,7 +244,7 @@ def main(args=None):
         # TODO: Fix string formating mix (adopt homogeneous format)
         torch.save(
             retinanet.module,
-            f"{parser.result_dir}"+"results/{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
+            f"{parser.result_dir}/"+"{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
         )
 
     retinanet.eval()
