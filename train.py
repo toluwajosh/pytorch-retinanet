@@ -238,9 +238,10 @@ def main(args=None):
 
         scheduler.step(np.mean(epoch_loss))
 
+        # TODO: Fix string formating mix (adopt homogeneous format)
         torch.save(
             retinanet.module,
-            "results/{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
+            f"{parser.result_dir}"+"results/{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
         )
 
     retinanet.eval()
