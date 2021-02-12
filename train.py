@@ -54,6 +54,7 @@ def main(args=None):
         default=50,
     )
     parser.add_argument("--epochs", help="Number of epochs", type=int, default=100)
+    parser.add_argument("--result_dir", default="results", help="Number of epochs", type=int, default=100)
 
     parser = parser.parse_args(args)
 
