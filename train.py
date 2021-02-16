@@ -54,7 +54,9 @@ def main(args=None):
         default=50,
     )
     parser.add_argument("--epochs", help="Number of epochs", type=int, default=100)
-    parser.add_argument("--result_dir", default="results", help="Number of epochs", type=int, default=100)
+    parser.add_argument(
+        "--result_dir", default="results", help="Number of epochs", type=str
+    )
 
     parser = parser.parse_args(args)
 
@@ -228,7 +230,9 @@ def main(args=None):
 
             print("Evaluating dataset")
 
-            coco_eval.evaluate_coco(dataset_val, retinanet)
+            coco_eval.evaluate_coco(
+                dataset_val, retinanet, result_dir=parser.results_dir
+            )
 
         elif parser.dataset == "csv" and parser.csv_val is not None:
 
@@ -241,7 +245,8 @@ def main(args=None):
         # TODO: Fix string formating mix (adopt homogeneous format)
         torch.save(
             retinanet.module,
-            f"{parser.result_dir}"+"results/{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
+            f"{parser.result_dir}"
+            + "/{}_retinanet_{}.pt".format(parser.dataset, epoch_num),
         )
 
     retinanet.eval()

@@ -72,7 +72,9 @@ def evaluate_coco(dataset, model, threshold=0.05, result_dir="results"):
         # write output
         json.dump(
             results,
-            open(f"{result_dir}/" + "{}_bbox_results.json".format(dataset.set_name), "w"),
+            open(
+                f"{result_dir}/" + "{}_bbox_results.json".format(dataset.set_name), "w"
+            ),
             indent=4,
         )
 
@@ -81,7 +83,7 @@ def evaluate_coco(dataset, model, threshold=0.05, result_dir="results"):
         coco_pred = coco_true.loadRes("{}_bbox_results.json".format(dataset.set_name))
 
         # run COCO evaluation
-        coco_eval = COCOeval(coco_true, coco_pred, "bbox")
+        coco_eval = COCOeval(coco_true, coco_pred, iouType="bbox")
         coco_eval.params.imgIds = image_ids
         coco_eval.evaluate()
         coco_eval.accumulate()
