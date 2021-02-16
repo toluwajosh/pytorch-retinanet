@@ -80,7 +80,7 @@ def evaluate_coco(dataset, model, threshold=0.05, result_dir="results"):
 
         # load results in COCO evaluation tool
         coco_true = dataset.coco
-        coco_pred = coco_true.loadRes("{}_bbox_results.json".format(dataset.set_name))
+        coco_pred = coco_true.loadRes(f"{result_dir}/"+"{}_bbox_results.json".format(dataset.set_name))
 
         # run COCO evaluation
         coco_eval = COCOeval(coco_true, coco_pred, iouType="bbox")
