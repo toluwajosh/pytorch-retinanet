@@ -39,11 +39,7 @@ class CocoDataset(Dataset):
         #         self.root_dir, "annotations", "instances_" + self.set_name + ".json"
         #     )
         # )
-        self.coco = COCO(
-            os.path.join(
-                self.root_dir, self.set_name + ".json"
-            )
-        )
+        self.coco = COCO(os.path.join(self.root_dir, self.set_name + ".json"))
         self.image_ids = self.coco.getImgIds()
 
         self.load_classes()
@@ -384,22 +380,35 @@ def collater(data):
 class Resizer(object):
     """Convert ndarrays in sample to Tensors."""
 
-    def __call__(self, sample, min_side=608, max_side=1024):
+    def __init__(self, min_side=608, max_side=1024, passthrough=False) -> None:
+        super().__init__()
+        self.min_side = min_side
+        self.max_side = max_side
+        self.passthrough = passthrough
+
+    def __call__(self, sample):
         image, annots = sample["img"], sample["annot"]
+
+        if self.passthrough:
+            return {
+                "img": torch.from_numpy(image.copy()),
+                "annot": torch.from_numpy(annots),
+                "scale": 1.0,
+            }
 
         rows, cols, cns = image.shape
 
         smallest_side = min(rows, cols)
 
         # rescale the image so the smallest side is min_side
-        scale = min_side / smallest_side
+        scale = self.min_side / smallest_side
 
         # check if the largest side is now greater than max_side, which can happen
         # when images have a large aspect ratio
         largest_side = max(rows, cols)
 
-        if largest_side * scale > max_side:
-            scale = max_side / largest_side
+        if largest_side * scale > self.max_side:
+            scale = self.max_side / largest_side
 
         # resize the image with the computed scale
         image = skimage.transform.resize(

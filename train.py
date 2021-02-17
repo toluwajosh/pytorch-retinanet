@@ -61,30 +61,38 @@ def main(args=None):
         type=str,
     )
     parser.add_argument(
-        "--batch_num", default=32, help="Number of samples in a batch", type=int
+        "--batch_num", default=8, help="Number of samples in a batch", type=int
     )
 
     parser = parser.parse_args(args)
 
     print(parser)
 
+    # parameters
+    BATCH_SIZE = parser.batch_num
+    IMAGE_MIN_SIDE = 1440
+    IMAGE_MAX_SIDE = 2560
+
     # Create the data loaders
     if parser.dataset == "coco":
 
         if parser.coco_path is None:
             raise ValueError("Must provide --coco_path when training on COCO,")
-
+        # TODO: parameterize arguments for Resizer, and other transform functions
+        # resizer: min_side=608, max_side=1024
         dataset_train = CocoDataset(
             parser.coco_path,
             # set_name="train2017",
             set_name="train_images_full",
-            transform=transforms.Compose([Normalizer(), Augmenter(), Resizer()]),
+            transform=transforms.Compose(
+                [Normalizer(), Augmenter(), Resizer(passthrough=True),]
+            ),
         )
         dataset_val = CocoDataset(
             parser.coco_path,
             # set_name="val2017",
             set_name="val_images_full",
-            transform=transforms.Compose([Normalizer(), Resizer()]),
+            transform=transforms.Compose([Normalizer(), Resizer(passthrough=True),]),
         )
 
     elif parser.dataset == "csv":
@@ -114,14 +122,16 @@ def main(args=None):
     else:
         raise ValueError("Dataset type not understood (must be csv or coco), exiting.")
 
-    sampler = AspectRatioBasedSampler(dataset_train, batch_size=32, drop_last=False)
+    sampler = AspectRatioBasedSampler(
+        dataset_train, batch_size=BATCH_SIZE, drop_last=False
+    )
     dataloader_train = DataLoader(
         dataset_train, num_workers=16, collate_fn=collater, batch_sampler=sampler
     )
 
     if dataset_val is not None:
         sampler_val = AspectRatioBasedSampler(
-            dataset_val, batch_size=16, drop_last=False
+            dataset_val, batch_size=BATCH_SIZE, drop_last=False
         )
         dataloader_val = DataLoader(
             dataset_val, num_workers=16, collate_fn=collater, batch_sampler=sampler_val
@@ -220,12 +230,10 @@ def main(args=None):
 
                 mean_loss = np.mean(loss_hist)
                 p_bar.set_description(
-                    str(
-                        f"Epoch: {epoch_num} | Iteration: {iter_num} | "
-                        f"Classification loss: {float(classification_loss.item()):.5f} | "
-                        f"Regression loss: {float(regression_loss.item()):.5f} | "
-                        f"Running loss: {mean_loss:.5f}"
-                    )
+                    f"Epoch: {epoch_num} | Iteration: {iter_num} | "
+                    f"Class loss: {float(classification_loss.item()):.5f} | "
+                    f"Regr loss: {float(regression_loss.item()):.5f} | "
+                    f"Running loss: {mean_loss:.5f}"
                 )
 
                 del classification_loss

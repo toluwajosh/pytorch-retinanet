@@ -257,7 +257,7 @@ class ResNet(nn.Module):
             if isinstance(layer, nn.BatchNorm2d):
                 layer.eval()
 
-    def forward(self, inputs):
+    def forward(self, inputs, score_threshold=0.05):
 
         if self.training:
             img_batch, annotations = inputs
@@ -305,7 +305,8 @@ class ResNet(nn.Module):
 
             for i in range(classification.shape[2]):
                 scores = torch.squeeze(classification[:, :, i])
-                scores_over_thresh = scores > 0.05
+                # TODO: parameterize score threshold
+                scores_over_thresh = scores > score_threshold
                 if scores_over_thresh.sum() == 0:
                     # no boxes to NMS, just continue
                     continue

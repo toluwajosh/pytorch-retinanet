@@ -30,6 +30,12 @@ def evaluate_coco(dataset, model, threshold=0.05, result_dir="results"):
             labels = labels.cpu()
             boxes = boxes.cpu()
 
+            # # DEBUG: check output here
+            # print(data["img"].shape)
+            # print(scores.shape, labels.shape, boxes.shape)
+            # # print(scores, labels, boxes)
+            # exit(0)
+
             # correct boxes for image scale
             boxes /= scale
 
@@ -80,7 +86,9 @@ def evaluate_coco(dataset, model, threshold=0.05, result_dir="results"):
 
         # load results in COCO evaluation tool
         coco_true = dataset.coco
-        coco_pred = coco_true.loadRes(f"{result_dir}/"+"{}_bbox_results.json".format(dataset.set_name))
+        coco_pred = coco_true.loadRes(
+            f"{result_dir}/" + "{}_bbox_results.json".format(dataset.set_name)
+        )
 
         # run COCO evaluation
         coco_eval = COCOeval(coco_true, coco_pred, iouType="bbox")
